@@ -146,8 +146,55 @@ def create_docx(hasil_ai, info):
 # =====================================
 # 3. ANTARMUKA PENGGUNA (UI)
 # =====================================
-st.markdown('<h1 class="title-text">⚡ AI Quiz Gen.</h1>', unsafe_allow_html=True)
-st.markdown("<p style='color: #64748B; font-size: 1.15rem; margin-bottom: 2.5rem;'>Sistem pembuat soal otomatis berbasis kecerdasan buatan dengan desain modern.</p>", unsafe_allow_html=True)
+st.markdown("""
+<style>
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.premium-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    animation: fadeUp 0.9s ease-out;
+}
+
+.premium-badge {
+    display: inline-block;
+    margin-bottom: 1rem;
+    padding: 0.35rem 1rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #4F46E5;
+    background: rgba(79, 70, 229, 0.12);
+    border-radius: 999px;
+}
+
+.premium-subtitle {
+    max-width: 760px;
+    margin: 0.8rem auto 0;
+    font-size: 1.15rem;
+    color: #64748B;
+    line-height: 1.7;
+}
+</style>
+
+<div class="premium-header">
+    <div class="premium-badge">AI-POWERED QUIZ SYSTEM</div>
+    <h1 class="title-text">⚡ SmartQuiz AI</h1>
+    <div class="premium-subtitle">
+        Generator soal otomatis berbasis AI dengan desain modern,
+        cepat, dan akurat.
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 with st.sidebar:
     st.markdown("<h2>⚙️ Settings</h2>", unsafe_allow_html=True)
