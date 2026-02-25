@@ -242,7 +242,7 @@ total_soal = jml_mudah + jml_sedang + jml_sulit
 
 st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
 kognitif = st.multiselect(
-    "🧠 Level Kognitif (Taksonomi Bloom)",
+    "📌 Level Kognitif (Taksonomi Bloom)",
     ["C1 (Mengingat)", "C2 (Memahami)", "C3 (Menerapkan)", "C4 (Menganalisis)", "C5 (Mengevaluasi)", "C6 (Mencipta)"],
     default=["C2 (Memahami)", "C3 (Menerapkan)"]
 )
