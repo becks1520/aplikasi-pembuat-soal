@@ -191,7 +191,6 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("✨ **Fitur Unggulan:**")
     st.markdown("- 🚀 Generasi Super Cepat\n- 📱 Responsif di HP & Tablet\n- 🖼️ Dukungan Gambar Otomatis\n- 📄 Export format Word (.docx)")
-    st.caption("✅ 100% Gratis (Free Tier) powered by Gemini")
 
 # =====================================================
 # 5. FUNGSI GENERATE AI TERBARU
