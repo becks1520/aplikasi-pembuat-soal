@@ -124,7 +124,7 @@ st.markdown("""
     <div style="font-size:0.8rem; font-weight:700; color:#4F46E5; letter-spacing:0.1em; text-transform:uppercase;">
         100% Free AI-Powered System
     </div>
-    <h1 class="title-text">⚡ SmartQuiz AI</h1>
+    <h1 class="title-text"> SmartQuiz AI</h1>
     <p style="color:#64748B; font-size:1.15rem; max-width: 1200px; margin: 0.5rem auto;">
         Generator soal otomatis berbasis AI dengan desain modern, cepat, dan akurat.
     </p>
@@ -185,7 +185,14 @@ def export_to_docx(judul, info, hasil_ai):
 # 4. SIDEBAR (HANYA GEMINI - 100% GRATIS)
 # =====================================================
 with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/6062/6062646.png", width=60)
+    st.markdown(
+        """
+        <div style="display: flex; justify-content: center; margin-bottom: 10px;">
+            <img src="https://i.ibb.co.com/4gdKY9Zj/Desain-tanpa-judul-2.png", width="120">
+        </div>
+        """, 
+        unsafe_allow_html=True
+    )
     st.header("⚙️ Autentikasi Sistem")
     api_key = st.text_input("🔑 Google Gemini API Key", type="password", placeholder="Mulai dengan 'AIzaSy...'")
     st.markdown("---")
