@@ -188,7 +188,7 @@ with st.sidebar:
     st.markdown(
         """
         <div style="display: flex; justify-content: center; margin-bottom: 10px;">
-            <img src="https://i.ibb.co.com/4gdKY9Zj/Desain-tanpa-judul-2.png", width="120">
+            <img src="https://i.ibb.co.com/4gdKY9Zj/Desain-tanpa-judul-2.png", width="80">
         </div>
         """, 
         unsafe_allow_html=True
@@ -402,4 +402,5 @@ if st.button("🚀 Generate Evaluasi Sekarang", use_container_width=True):
             )
 
     except Exception as e:
+
         st.error(f"Terjadi kesalahan: Pastikan API Key Gemini Anda valid. (Error Detail: {e})")
