@@ -188,7 +188,7 @@ with st.sidebar:
     st.markdown(
         """
         <div style="display: flex; justify-content: center; margin-bottom: 10px;">
-            <img src="https://i.ibb.co.com/4gdKY9Zj/Desain-tanpa-judul-2.png", width="80">
+            <img src="https://i.ibb.co.com/4gdKY9Zj/Desain-tanpa-judul-2.png", width="120">
         </div>
         """, 
         unsafe_allow_html=True
@@ -197,7 +197,7 @@ with st.sidebar:
     api_key = st.text_input("🔑 Google Gemini API Key", type="password", placeholder="Mulai dengan 'AIzaSy...'")
     st.markdown("---")
     st.markdown("✨ **Fitur Unggulan:**")
-    st.markdown("- 🚀 Generasi Super Cepat\n- 📱 Responsif di HP & Tablet\n- 🖼️ Dukungan Gambar Otomatis\n- 📄 Export format Word (.docx)")
+    st.markdown("- 🚀 Generasi Super Cepat\n- 📱 Responsif di HP & Tablet\n- 🖼️ Dukungan Gambar Otomatis\n-  📖 Tips Convert Rumus AI di Word\n- 📄 Export format Word (.docx)")
 
 # =====================================================
 # 5. FUNGSI GENERATE AI TERBARU
@@ -299,13 +299,13 @@ else:
 instruksi_gambar = ""
 if mode_bergambar:
     instruksi_gambar = """
-    3. ATURAN GAMBAR (SANGAT PENTING): Anda WAJIB menyisipkan 1 gambar di SETIAP soal!
+    4. ATURAN GAMBAR (SANGAT PENTING): Anda WAJIB menyisipkan 1 gambar di SETIAP soal!
        Gunakan format Kurung Kurawal Ganda persis seperti ini: {{GAMBAR: kata kunci}}
        Ganti kata kunci dengan 1 atau 2 kata benda bahasa Inggris yang sangat umum.
        Contoh Benar: {{GAMBAR: human anatomy}} atau {{GAMBAR: animal cell}}
     """
 else:
-    instruksi_gambar = "3. JANGAN menyisipkan gambar apapun ke dalam soal."
+    instruksi_gambar = "4. JANGAN menyisipkan gambar apapun ke dalam soal."
 
 if st.button("🚀 Generate Evaluasi Sekarang", use_container_width=True):
     if not api_key:
@@ -332,11 +332,14 @@ if st.button("🚀 Generate Evaluasi Sekarang", use_container_width=True):
     ATURAN LAYOUT (WAJIB DIIKUTI 100%):
     1. DILARANG KERAS menggunakan format Heading/Judul Markdown (simbol #, ##, ###) di bagian manapun! Tuliskan nomor soal dengan teks biasa. Gunakan cetak tebal (**teks**) saja jika ingin membuat sub-judul.
     
-    2. {instruksi_format}
+    2. DILARANG KERAS menggunakan format LaTeX matematika atau menyisipkan simbol Dolar ($) di bagian manapun! Tuliskan angka dan rumus menggunakan karakter teks biasa saja (contoh: x^2, x_1, 1/2).
+    
+    3. {instruksi_format}
     
     {instruksi_gambar}
 
-    Di akhir, sertakan:
+    Di akhir hasil generasi Anda, SERTAKAN BAGIAN BERIKUT INI SECARA BERURUTAN:
+    
     [BAGIAN_KUNCI] 
     (Buat tabel Kunci Jawaban dan Pembahasan di sini)
     
@@ -345,13 +348,26 @@ if st.button("🚀 Generate Evaluasi Sekarang", use_container_width=True):
     | No | Indikator Soal | Level Kognitif | Tingkat Kesulitan |
     |---|---|---|---|
     (Isi tabel kisi-kisi di sini)
+
+    [BAGIAN_KARTU]
+    Tuliskan ulang SETIAP SOAL dalam format KARTU SOAL Kurikulum Merdeka menggunakan Markdown (tanpa tabel).
+    Contoh Struktur Wajib untuk setiap nomor:
+    ---
+    **KARTU SOAL NOMOR [X]**
+    * **Tujuan Pembelajaran:** {topik}
+    * **Materi Pokok:** [Isi materi spesifik]
+    * **Indikator Soal:** [Isi indikator yang sama dengan tabel kisi-kisi]
+    * **Level Kognitif:** [Isi level]
+    
+    **Rumusan Soal:**
+    [Tuliskan teks soal beserta opsi jawabannya secara berurutan ke bawah]
     """
 
     try:
-        with st.spinner("⏳ Memproses data... AI sedang menyusun soal untuk Anda."):
+        with st.spinner("⏳ Memproses data... AI sedang menyusun soal, kunci, kisi-kisi, & kartu soal sekaligus."):
             hasil = generate_with_gemini(prompt, api_key)
 
-        st.success("✨ Selesai! Evaluasi berhasil di-generate.")
+        st.success("✨ Selesai! Evaluasi lengkap berhasil di-generate.")
 
         # Mencegah Teks Raksasa
         hasil_clean = re.sub(r'^#+\s+(.*)$', r'**\1**', hasil, flags=re.MULTILINE)
@@ -365,15 +381,16 @@ if st.button("🚀 Generate Evaluasi Sekarang", use_container_width=True):
         if mode_bergambar:
             hasil_clean = re.sub(r'\{\{GAMBAR:\s*(.*?)\}\}', ubah_ke_url, hasil_clean, flags=re.IGNORECASE)
 
-        # Memisahkan hasil teks AI menjadi 3 bagian
-        parts = re.split(r'\[BAGIAN_KUNCI\]|\[BAGIAN_KISI\]', hasil_clean)
+        # Memisahkan hasil teks AI menjadi 4 bagian (Soal, Kunci, Kisi, Kartu)
+        parts = re.split(r'\[BAGIAN_KUNCI\]|\[BAGIAN_KISI\]|\[BAGIAN_KARTU\]', hasil_clean)
         soal_teks = parts[0].strip()
         kunci_teks = parts[1].strip() if len(parts) > 1 else "Kunci jawaban gagal dibuat."
         kisi_teks = parts[2].strip() if len(parts) > 2 else "Kisi-kisi gagal dibuat."
+        kartu_teks = parts[3].strip() if len(parts) > 3 else "Kartu soal gagal dibuat."
 
-        # Menampilkan di Tab
+        # Menampilkan di Tab (Ada 4 Tab Bersebelahan)
         st.markdown("<br>", unsafe_allow_html=True)
-        tab1, tab2, tab3 = st.tabs(["📄 Soal Evaluasi", "🔑 Kunci Jawaban", "📊 Kisi-kisi"])
+        tab1, tab2, tab3, tab4 = st.tabs(["📄 Soal Evaluasi", "🔑 Kunci Jawaban", "📊 Kisi-kisi", "📇 Kartu Soal"])
 
         with tab1:
             st.markdown(soal_teks)
@@ -381,26 +398,43 @@ if st.button("🚀 Generate Evaluasi Sekarang", use_container_width=True):
             st.markdown(kunci_teks)
         with tab3:
             st.markdown(kisi_teks)
+        with tab4:
+            st.markdown(kartu_teks)
             
         st.markdown("---")
         
-        # Logika Tombol Download Word
+        # --- TIPS MERAPIKAN RUMUS ---
+        with st.expander("📢 Tips Mengubah Rumus Hasil AI Menjadi Rumus Rapi di Microsoft Word"):
+            st.info("""
+            Agar rumus dari hasil AI tampil rapi dan profesional di dokumen Word, ikuti langkah berikut:
+            
+            **✨ Langkah Mudah & Praktis:**
+            1. **Salin** rumus matematika dari hasil AI (contoh: `D = b^2 - 4ac`)
+            2. **Tempelkan** ke dokumen Microsoft Word
+            3. **Blok / sorot** rumus tersebut
+            4. Tekan **`Alt` + `=`** pada keyboard
+            5. Pilih Tab **Design** yang muncul di toolbar
+            6. Klik **Convert Math Region** dan pilih opsi **Convert to Professional**
+            
+            ➡️ **Rumus otomatis berubah menjadi format Equation matematis yang rapi!**
+            """)
+
+        # Logika Tombol Download Word (Export Semua Sekaligus)
         with st.spinner("📦 Menyiapkan file Microsoft Word (.docx)..."):
             info_doc = {"mapel": mapel, "kelas": kelas, "topik": topik}
             
-            # Gabungkan kembali untuk diexport
-            formatted_content = f"{soal_teks}\n\n## Kunci Jawaban\n{kunci_teks}\n\n## Kisi-kisi\n{kisi_teks}"
+            # Gabungkan kembali semua elemen untuk diexport ke satu dokumen
+            formatted_content = f"{soal_teks}\n\n## Kunci Jawaban\n{kunci_teks}\n\n## Kisi-kisi\n{kisi_teks}\n\n## Kumpulan Kartu Soal\n{kartu_teks}"
             
             doc_buffer = export_to_docx(f"KUMPULAN SOAL: {mapel} ({kelas})", info_doc, formatted_content)
             
             st.download_button(
                 label="⬇️ Download MS Word (.docx)",
                 data=doc_buffer.getvalue(),
-                file_name=f"Soal_{mapel}_{kelas}.docx",
+                file_name=f"Evaluasi_Lengkap_{mapel}_{kelas}.docx",
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                 use_container_width=True
             )
 
     except Exception as e:
-
         st.error(f"Terjadi kesalahan: Pastikan API Key Gemini Anda valid. (Error Detail: {e})")
