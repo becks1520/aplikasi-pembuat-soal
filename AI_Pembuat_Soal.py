@@ -607,9 +607,15 @@ Kartu Soal Kurikulum Merdeka untuk SETIAP soal:
 # =====================================================
 # 8. TOMBOL GENERATE & LOGIKA UTAMA
 # =====================================================
+
+# Inisialisasi session_state agar data tidak hilang saat tombol download diklik
+if "hasil_generate" not in st.session_state:
+    st.session_state.hasil_generate = None  # Menyimpan semua hasil generate
+
 generate_clicked = st.button("🚀 Generate Evaluasi Sekarang", use_container_width=True, type="primary")
 
 if generate_clicked:
+    # ── Validasi ──
     errors = []
     if not api_key:
         errors.append(f"⚠️ Masukkan **{provider} API Key** di sidebar kiri.")
@@ -669,85 +675,47 @@ if generate_clicked:
         progress_bar.progress(90, text="📄 Menyiapkan file Word...")
         time.sleep(0.3)
 
-        # Siapkan DOCX
+        # Siapkan semua DOCX (dibuat sekali, disimpan di session_state)
         info_doc = {"mapel": mapel, "kelas": kelas, "topik": topik}
-        formatted_content = (
-            f"{soal_teks}\n\n"
-            f"## Kunci Jawaban & Pembahasan\n{kunci_teks}\n\n"
-            f"## Kisi-Kisi Soal\n{kisi_teks}\n\n"
-            f"## Kumpulan Kartu Soal\n{kartu_teks}"
+
+        def buat_docx_bagian(judul, konten):
+            return export_to_docx(judul, info_doc, konten).getvalue()
+
+        doc_lengkap = buat_docx_bagian(
+            f"SOAL EVALUASI LENGKAP: {mapel.upper()} – {kelas}",
+            f"{soal_teks}\n\n## Kunci Jawaban & Pembahasan\n{kunci_teks}\n\n## Kisi-Kisi Soal\n{kisi_teks}\n\n## Kumpulan Kartu Soal\n{kartu_teks}"
         )
-        doc_buffer = export_to_docx(
-            f"SOAL EVALUASI: {mapel.upper()} – {kelas}", info_doc, formatted_content
-        )
+        doc_soal   = buat_docx_bagian(f"SOAL EVALUASI: {mapel.upper()} – {kelas}", soal_teks)
+        doc_kunci  = buat_docx_bagian(f"KUNCI JAWABAN & PEMBAHASAN: {mapel.upper()} – {kelas}", kunci_teks)
+        doc_kisi   = buat_docx_bagian(f"KISI-KISI SOAL: {mapel.upper()} – {kelas}", kisi_teks)
+        doc_kartu  = buat_docx_bagian(f"KARTU SOAL: {mapel.upper()} – {kelas}", kartu_teks)
+
+        # ✅ Simpan semua data ke session_state agar tidak hilang saat download
+        st.session_state.hasil_generate = {
+            "soal_teks":   soal_teks,
+            "kunci_teks":  kunci_teks,
+            "kisi_teks":   kisi_teks,
+            "kartu_teks":  kartu_teks,
+            "model_used":  model_used,
+            "provider":    provider,
+            "total_soal":  total_soal,
+            "mapel":       mapel,
+            "kelas":       kelas,
+            "doc_lengkap": doc_lengkap,
+            "doc_soal":    doc_soal,
+            "doc_kunci":   doc_kunci,
+            "doc_kisi":    doc_kisi,
+            "doc_kartu":   doc_kartu,
+        }
 
         progress_bar.progress(100, text="🎉 Selesai!")
         time.sleep(0.5)
         progress_bar.empty()
 
-        st.success(
-            f"✨ Berhasil! **{total_soal} soal** selesai di-generate "
-            f"menggunakan **{provider}** · model `{model_used}`."
-        )
-
-        st.markdown("<br>", unsafe_allow_html=True)
-        tab1, tab2, tab3, tab4 = st.tabs([
-            "📄 Soal Evaluasi", "🔑 Kunci & Pembahasan", "📊 Kisi-Kisi", "📇 Kartu Soal"
-        ])
-        with tab1: st.markdown(soal_teks)
-        with tab2: st.markdown(kunci_teks)
-        with tab3: st.markdown(kisi_teks)
-        with tab4: st.markdown(kartu_teks)
-
-        st.markdown("---")
-
-        dl_col1, dl_col2 = st.columns([2, 1])
-        with dl_col1:
-            st.download_button(
-                label="⬇️ Download Lengkap – Microsoft Word (.docx)",
-                data=doc_buffer.getvalue(),
-                file_name=f"Evaluasi_{mapel.replace(' ','_')}_{kelas.replace(' ','_')}.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                use_container_width=True
-            )
-        with dl_col2:
-            st.info(f"📁 `.docx` · {len(doc_buffer.getvalue()) // 1024} KB")
-
-        st.markdown("<br>", unsafe_allow_html=True)
-        with st.expander("💡 Tips: Merapikan Rumus Matematika di Microsoft Word"):
-            st.info("""
-**Cara convert rumus teks menjadi Equation rapi di Word:**
-1. **Salin** teks rumus dari hasil AI (misal: `x^2 - 4ac = 0`)
-2. **Tempel** ke dokumen Microsoft Word
-3. **Blok / sorot** teks rumus
-4. Tekan **`Alt + =`**
-5. Klik **Design** → **Convert** → **Convert to Professional**
-            """)
-
-        with st.expander("ℹ️ Tentang Gambar Ilustrasi"):
-            st.info("""
-Gambar diambil otomatis dari **LoremFlickr** berdasarkan kata kunci AI.
-- Di **web**: terlihat langsung di halaman ini.
-- Di **Word**: disematkan otomatis saat download.
-- Gambar kurang pas? Bisa diganti/dihapus di Microsoft Word.
-            """)
-
-        with st.expander("🔄 Panduan Jika Kuota API Habis"):
-            st.info(f"""
-**Kamu sedang menggunakan: {provider}**
-
-| Provider | Limit Gratis | Link Daftar |
-|---|---|---|
-| 🔵 Google Gemini | 1.500 req/hari | [aistudio.google.com](https://aistudio.google.com/app/apikey) |
-| 🟠 Groq | 14.400 req/hari | [console.groq.com](https://console.groq.com) |
-| 🟢 OpenRouter | Banyak model gratis | [openrouter.ai](https://openrouter.ai/keys) |
-
-**Solusi cepat:** Ganti provider di sidebar kiri — semua gratis!
-            """)
-
     except Exception as e:
         error_msg = str(e)
-        progress_bar.empty() if 'progress_bar' in locals() else None
+        if 'progress_bar' in locals():
+            progress_bar.empty()
 
         if "API_KEY" in error_msg.upper() or "invalid" in error_msg.lower() or "401" in error_msg:
             st.error(f"🔐 **API Key {provider} tidak valid.** Pastikan API Key benar dan aktif.")
@@ -761,3 +729,118 @@ Gambar diambil otomatis dari **LoremFlickr** berdasarkan kata kunci AI.
             st.error(f"❌ **Terjadi kesalahan ({provider}):** {error_msg}")
 
         st.info("💡 **Solusi cepat:** Ganti provider AI di sidebar kiri — Groq dan OpenRouter tersedia gratis!")
+        st.stop()
+
+
+# =====================================================
+# 9. TAMPILKAN HASIL (dari session_state — tidak hilang saat download)
+# =====================================================
+if st.session_state.hasil_generate:
+    r = st.session_state.hasil_generate  # shortcut
+
+    st.success(
+        f"✨ Berhasil! **{r['total_soal']} soal** selesai di-generate "
+        f"menggunakan **{r['provider']}** · model `{r['model_used']}`."
+    )
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ── Tab Tampilan ──
+    tab1, tab2, tab3, tab4 = st.tabs([
+        "📄 Soal Evaluasi", "🔑 Kunci & Pembahasan", "📊 Kisi-Kisi", "📇 Kartu Soal"
+    ])
+    with tab1: st.markdown(r["soal_teks"])
+    with tab2: st.markdown(r["kunci_teks"])
+    with tab3: st.markdown(r["kisi_teks"])
+    with tab4: st.markdown(r["kartu_teks"])
+
+    st.markdown("---")
+    st.markdown("### ⬇️ Download File")
+
+    # ── Baris 1: Download Lengkap ──
+    dl0_col1, dl0_col2 = st.columns([3, 1])
+    with dl0_col1:
+        st.download_button(
+            label="📦 Download LENGKAP (Soal + Kunci + Kisi + Kartu)",
+            data=r["doc_lengkap"],
+            file_name=f"Evaluasi_Lengkap_{r['mapel'].replace(' ','_')}_{r['kelas'].replace(' ','_')}.docx",
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            use_container_width=True,
+            key="dl_lengkap"
+        )
+    with dl0_col2:
+        st.info(f"📁 {len(r['doc_lengkap']) // 1024} KB")
+
+    st.markdown("<div style='margin-top:0.5rem;'></div>", unsafe_allow_html=True)
+
+    # ── Baris 2: Download Terpisah ──
+    st.markdown("**Atau download per bagian:**")
+    d1, d2, d3, d4 = st.columns(4, gap="small")
+
+    with d1:
+        st.download_button(
+            label="📄 Soal Saja",
+            data=r["doc_soal"],
+            file_name=f"Soal_{r['mapel'].replace(' ','_')}_{r['kelas'].replace(' ','_')}.docx",
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            use_container_width=True,
+            key="dl_soal"
+        )
+    with d2:
+        st.download_button(
+            label="🔑 Kunci & Pembahasan",
+            data=r["doc_kunci"],
+            file_name=f"Kunci_{r['mapel'].replace(' ','_')}_{r['kelas'].replace(' ','_')}.docx",
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            use_container_width=True,
+            key="dl_kunci"
+        )
+    with d3:
+        st.download_button(
+            label="📊 Kisi-Kisi",
+            data=r["doc_kisi"],
+            file_name=f"KisiKisi_{r['mapel'].replace(' ','_')}_{r['kelas'].replace(' ','_')}.docx",
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            use_container_width=True,
+            key="dl_kisi"
+        )
+    with d4:
+        st.download_button(
+            label="📇 Kartu Soal",
+            data=r["doc_kartu"],
+            file_name=f"KartuSoal_{r['mapel'].replace(' ','_')}_{r['kelas'].replace(' ','_')}.docx",
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            use_container_width=True,
+            key="dl_kartu"
+        )
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    with st.expander("💡 Tips: Merapikan Rumus Matematika di Microsoft Word"):
+        st.info("""
+**Cara convert rumus teks menjadi Equation rapi di Word:**
+1. **Salin** teks rumus dari hasil AI (misal: `x^2 - 4ac = 0`)
+2. **Tempel** ke dokumen Microsoft Word
+3. **Blok / sorot** teks rumus
+4. Tekan **`Alt + =`**
+5. Klik **Design** → **Convert** → **Convert to Professional**
+        """)
+
+    with st.expander("ℹ️ Tentang Gambar Ilustrasi"):
+        st.info("""
+Gambar diambil otomatis dari **LoremFlickr** berdasarkan kata kunci AI.
+- Di **web**: terlihat langsung di halaman ini.
+- Di **Word**: disematkan otomatis saat download.
+- Gambar kurang pas? Bisa diganti/dihapus di Microsoft Word.
+        """)
+
+    with st.expander("🔄 Panduan Jika Kuota API Habis"):
+        st.info("""
+| Provider | Limit Gratis | Link Daftar |
+|---|---|---|
+| 🔵 Google Gemini | 1.500 req/hari | [aistudio.google.com](https://aistudio.google.com/app/apikey) |
+| 🟠 Groq | 14.400 req/hari | [console.groq.com](https://console.groq.com) |
+| 🟢 OpenRouter | Banyak model gratis | [openrouter.ai](https://openrouter.ai/keys) |
+
+**Solusi cepat:** Ganti provider di sidebar kiri — semua gratis!
+        """)
